@@ -57,10 +57,6 @@ public class CamaraPictureActivity extends AppCompatActivity implements CameraVi
                 .setMessage("onCameraInavailable").show();
     }
 
-    @Override
-    public int onSetOrientation() {
-        return 90;
-    }
 
     @Override
     public int[] onGetProposalPreviewSize() {
@@ -68,7 +64,7 @@ public class CamaraPictureActivity extends AppCompatActivity implements CameraVi
         int heightPixels = getResources().getDisplayMetrics().heightPixels;
 //        return new int[]{480, 320};
 
-        return new int[]{heightPixels, widthPixels};
+        return new int[]{widthPixels,heightPixels};
 //        return null;
     }
 }

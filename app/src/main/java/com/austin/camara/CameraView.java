@@ -75,8 +75,6 @@ public class CameraView extends RelativeLayout implements CameraControllInterfac
 
         int[] onGetProposalPreviewSize();
 
-        int onSetOrientation();
-
     }
 
     class MaskViewHolder{

@@ -2,7 +2,11 @@ package com.austin.camara;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.media.ExifInterface;
 import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,8 +14,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,7 +35,6 @@ public class CameraController implements SurfaceHolder.Callback {
     private boolean mHasNoCameraFlag = false;
     public CameraView.CameraSettingInterface mCameraSettingInterface;
     private Camera c = null;
-    private int mRotateDegree = 0;
     private SurfaceView mSurfaceView;
     private CameraView cameraView;
     private SurfaceHolder mSurfaceHolder;
@@ -39,35 +42,65 @@ public class CameraController implements SurfaceHolder.Callback {
     private android.hardware.Camera.PictureCallback pictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
+
+            Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
             File pictureFile = new File(Environment.getExternalStorageDirectory(), "custom.jpeg");
-            if (pictureFile == null){
-                return;
-            }
 
             if(pictureFile.exists()){
                 pictureFile.delete();
             }
 
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                fos.write(data);
-                fos.flush();
-                fos.close();
-            } catch (FileNotFoundException e) {
-                Log.d(TAG, "File not found: " + e.getMessage());
-            } catch (IOException e) {
-                Log.d(TAG, "Error accessing file: " + e.getMessage());
+            if (!pictureFile.getParentFile().exists()) {
+                pictureFile.getParentFile().mkdirs(); // 创建文件夹
             }
 
+            bmp = rotateBitmapByDegree(bmp, 90);
+
+            try {
+                BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(pictureFile));
+                bmp.compress(Bitmap.CompressFormat.JPEG, 100, bos); // 向缓冲区之中压缩图片
+                bos.flush();
+                bos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                ExifInterface exifInterface = new ExifInterface(pictureFile.getAbsolutePath());
+                // 修正图片的旋转角度，设置其不旋转。这里也可以设置其旋转的角度，可以传值过去，
+                // 例如旋转90度，传值ExifInterface.ORIENTATION_ROTATE_90，需要将这个值转换为String类型的
+                exifInterface.setAttribute(ExifInterface.TAG_ORIENTATION, "no");
+                exifInterface.saveAttributes();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            c.stopPreview();
             c.startPreview();
         }
     };
 
+    public Bitmap rotateBitmapByDegree(Bitmap bm, int degree) {
+        Bitmap returnBm = null;
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        try {
+            returnBm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
+        } catch (OutOfMemoryError e) {
+        }
+        if (returnBm == null) {
+            returnBm = bm;
+        }
+        if (bm != returnBm) {
+            bm.recycle();
+        }
+        return returnBm;
+    }
 
     public CameraController(CameraView cameraView) {
         this.cameraView = cameraView;
         this.context = cameraView.getContext();
         mSurfaceView = new SurfaceView(context);
+
         cameraView.addView(mSurfaceView);
         checkCameraHardware();
     }
@@ -100,7 +133,14 @@ public class CameraController implements SurfaceHolder.Callback {
 //            mSurfaceHolder.setFormat(PixelFormat.TRANSPARENT);
             mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
             c.setPreviewDisplay(mSurfaceHolder);
-
+            mSurfaceView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(c!=null){
+                        c.autoFocus(null);
+                    }
+                }
+            });
         } catch (Exception e) {
             // Camera is not available (in use or does not exist)
             e.printStackTrace();
@@ -114,11 +154,9 @@ public class CameraController implements SurfaceHolder.Callback {
     private void setCameraParameters() {
         Camera.Parameters parameters = c.getParameters();
         if (mCameraSettingInterface != null) {
-            mRotateDegree = mCameraSettingInterface.onSetOrientation();
-
             int[] size = mCameraSettingInterface.onGetProposalPreviewSize();
             if(size!=null) {
-                choosePreviewSize(parameters, size[0], size[1]);
+                choosePreviewSize(parameters, size[1], size[0]);
                 cameraView.requestLayout();
                 c.setParameters(parameters);
             }else {
@@ -131,7 +169,7 @@ public class CameraController implements SurfaceHolder.Callback {
         }
 
 
-        c.setDisplayOrientation(mRotateDegree);
+        c.setDisplayOrientation(90);
     }
 
     private void setMaxSize(Camera.Parameters parameters) {
@@ -217,6 +255,7 @@ public class CameraController implements SurfaceHolder.Callback {
 
         Log.e("TAG", "计算的Preview宽高：" + finalSize.width + ":" + finalSize.height);
         Log.e("TAG", "计算的Picture宽高：" + finalSize2.width + ":" + finalSize2.height);
+
         parameters.setPreviewSize(finalSize.width, finalSize.height);
         parameters.setPictureSize(finalSize2.width, finalSize2.height);
     }
@@ -287,7 +326,16 @@ public class CameraController implements SurfaceHolder.Callback {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                c.takePicture(null, null, pictureCallback);
+                if(c!=null){
+                    c.autoFocus(new Camera.AutoFocusCallback() {
+                        @Override
+                        public void onAutoFocus(boolean success, Camera camera) {
+                            if(success){
+                                c.takePicture(null, null, pictureCallback);
+                            }
+                        }
+                    });
+                }
             }
         };
     }
