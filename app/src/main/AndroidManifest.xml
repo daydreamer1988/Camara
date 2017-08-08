@@ -32,7 +32,8 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <activity android:name=".PicturePreviewActivity"></activity>
+        <activity android:name=".PicturePreviewActivity" />
+        <activity android:name=".CamaraPictureActivity"></activity>
     </application>
 
 </manifest>

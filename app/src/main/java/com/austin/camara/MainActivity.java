@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private void initData() {
         mData.add("系统相机-拍照");
         mData.add("系统相机-录像");
+        mData.add("自定义相机-拍照");
 
     }
 
@@ -101,6 +102,11 @@ public class MainActivity extends AppCompatActivity {
                                 file1.delete();
                             }
                             uri = new CamaraUtil(MainActivity.this).startVideoCamara(file1);
+
+                            break;
+                        case 2:
+                            CamaraPictureActivity.startActivity(MainActivity.this);
+                            break;
                     }
                 }
             });
