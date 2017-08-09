@@ -92,8 +92,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     switch (position){
                         case 0:
-                            File file = new File(Environment.getExternalStorageDirectory(), "pic.png");
-                            uri = new CamaraUtil(MainActivity.this).startPictureCamara(file);
+                            /*File file = new File(Environment.getExternalStorageDirectory(), "pic.png");
+                            uri = new CamaraUtil(MainActivity.this).startPictureCamara(file);*/
+                            startActivity(new Intent(MainActivity.this, DeleteActivity.class));
+
                             break;
 
                         case 1:

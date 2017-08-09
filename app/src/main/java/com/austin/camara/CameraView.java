@@ -2,6 +2,7 @@ package com.austin.camara;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
@@ -50,21 +51,30 @@ public class CameraView extends RelativeLayout implements CameraControllInterfac
         mController = new CameraController(this);
     }
 
-    public void setCamaraSettingInterface(CameraSettingInterface cameraInterface){
-        mController.mCameraSettingInterface = cameraInterface;
-    }
 
-    public void onResume() {
+    public void onResume(CameraSettingInterface cameraInterface) {
+        mController.mCameraSettingInterface = cameraInterface;
         mController.startPreview();
     }
 
-    public void onPause() {
+    public void onStop() {
         mController.stopPreview();
     }
 
     public void addMaskView() {
         maskViewHolder = mController.addMaskView(R.layout.layout_camera_surface);
         maskViewHolder.mTakePicture.setOnClickListener(mController.takePicture());
+        new CountDownTimer(1500, 1500) {
+            @Override
+            public void onTick(long l) {
+
+            }
+
+            @Override
+            public void onFinish() {
+                maskViewHolder.background.setVisibility(GONE);
+            }
+        }.start();
     }
 
 
@@ -79,11 +89,11 @@ public class CameraView extends RelativeLayout implements CameraControllInterfac
 
     class MaskViewHolder{
         private Button mTakePicture;
-
+        private View background;
         public MaskViewHolder(View maskView) {
             mTakePicture = (Button) maskView.findViewById(R.id.takePicture);
+            background = maskView.findViewById(R.id.background);
         }
     }
-
 
 }

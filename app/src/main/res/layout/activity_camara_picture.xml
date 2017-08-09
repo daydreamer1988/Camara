@@ -6,15 +6,13 @@
     android:layout_height="match_parent"
     tools:context="com.austin.camara.CamaraPictureActivity">
 
-
-
-    <com.austin.camara.CameraView
-        android:id="@+id/cameraView"
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/root"
+        android:background="@android:color/black"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </com.austin.camara.CameraView>
-
-
+    </LinearLayout>
 
 </RelativeLayout>

@@ -1,12 +1,12 @@
 package com.austin.camara;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.ExifInterface;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,11 +18,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
@@ -32,13 +27,190 @@ import static android.content.ContentValues.TAG;
 
 public class CameraController implements SurfaceHolder.Callback {
     private Context context;
-    private boolean mHasNoCameraFlag = false;
     public CameraView.CameraSettingInterface mCameraSettingInterface;
-    private Camera c = null;
+    private Camera camera = null;
     private SurfaceView mSurfaceView;
     private CameraView cameraView;
     private SurfaceHolder mSurfaceHolder;
     private View mMaskView;
+
+    private CameraView.MaskViewHolder maskViewHolder;
+
+
+    public CameraController(CameraView cameraView) {
+        this.cameraView = cameraView;
+        this.context = cameraView.getContext();
+    }
+
+    public void startPreview() {
+            mSurfaceView = new SurfaceView(context);
+            cameraView.addView(mSurfaceView);
+            cameraView.addMaskView();
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    try {
+                        synchronized (CameraController.this) {
+                            initCamera();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        if (mCameraSettingInterface != null) {
+                            mCameraSettingInterface.onCameraInavailable();
+                        }
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    try {
+                        mSurfaceHolder = mSurfaceView.getHolder();
+                        mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+                        mSurfaceHolder.addCallback(CameraController.this);
+
+                        if (camera != null) {
+                            mSurfaceView.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    if (camera != null) {
+                                        camera.autoFocus(null);
+                                    }
+                                }
+                            });
+                            camera.setPreviewDisplay(mSurfaceHolder);
+                            camera.startPreview();
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error setting camera preview: " + e.getMessage());
+                    }
+                }
+            }.execute();
+
+        /*try {
+            initCamera();
+            mSurfaceHolder = mSurfaceView.getHolder();
+            mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+            mSurfaceHolder.addCallback(CameraController.this);
+
+            if(camera !=null) {
+                mSurfaceView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(camera !=null){
+                            camera.autoFocus(null);
+                        }
+                    }
+                });
+                camera.setPreviewDisplay(mSurfaceHolder);
+                camera.startPreview();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error setting camera preview: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (mCameraSettingInterface != null) {
+                mCameraSettingInterface.onCameraInavailable();
+            }
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        }).start();*/
+
+    }
+
+    public void stopPreview() {
+        synchronized (this) {
+            if (camera != null) {
+                camera.stopPreview();
+                camera.release();
+                camera = null;
+            }
+        }
+
+        mSurfaceHolder.removeCallback(CameraController.this);
+        cameraView.removeView(mMaskView);
+        cameraView.removeView(mSurfaceView);
+    }
+
+    private void initCamera() {
+        camera = Camera.open();
+        Camera.Parameters parameters = camera.getParameters();
+        if (mCameraSettingInterface != null) {
+            int[] size = mCameraSettingInterface.onGetProposalPreviewSize();
+            Log.e("TAG", "设定的宽高：" + size[0] + ":" + size[1]);
+
+            if(size!=null) {
+                CamaraUtil.choosePreviewSize(parameters, size[1], size[0]);
+            }else {
+                CamaraUtil.chooseMaxSize(parameters);
+            }
+            camera.setParameters(parameters);
+        }
+        camera.setDisplayOrientation(90);
+    }
+
+    public CameraView.MaskViewHolder addMaskView(int layoutid) {
+            mMaskView = LayoutInflater.from(context).inflate(layoutid, cameraView, false);
+            cameraView.addView(mMaskView);
+            maskViewHolder = cameraView.new MaskViewHolder(mMaskView);
+        return maskViewHolder;
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        mSurfaceHolder = holder;
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+        if (holder.getSurface() == null) {
+            return;
+        }
+        mSurfaceHolder = holder;
+
+        // set preview size and make any resize, rotate or
+        // reformatting changes here
+
+        try {
+            camera.stopPreview();
+            camera.setPreviewDisplay(holder);
+            camera.startPreview();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting camera preview: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+    }
+
+    public View.OnClickListener takePicture() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(camera !=null){
+                    camera.autoFocus(new Camera.AutoFocusCallback() {
+                        @Override
+                        public void onAutoFocus(boolean success, Camera camera) {
+                            if(success){
+                                CameraController.this.camera.takePicture(null, null, pictureCallback);
+                            }
+                        }
+                    });
+                }
+            }
+        };
+    }
+
     private android.hardware.Camera.PictureCallback pictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
@@ -74,8 +246,8 @@ public class CameraController implements SurfaceHolder.Callback {
                 e.printStackTrace();
             }
 
-            c.stopPreview();
-            c.startPreview();
+            CameraController.this.camera.stopPreview();
+            CameraController.this.camera.startPreview();
         }
     };
 
@@ -96,247 +268,4 @@ public class CameraController implements SurfaceHolder.Callback {
         return returnBm;
     }
 
-    public CameraController(CameraView cameraView) {
-        this.cameraView = cameraView;
-        this.context = cameraView.getContext();
-        mSurfaceView = new SurfaceView(context);
-
-        cameraView.addView(mSurfaceView);
-        checkCameraHardware();
-    }
-
-
-    public void checkCameraHardware() {
-        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            mHasNoCameraFlag = true;
-        } else {
-            mHasNoCameraFlag = false;
-        }
-    }
-
-    public Camera initCameraAndBindSurfaceHolder() {
-
-        if (mCameraSettingInterface != null) {
-            if (mHasNoCameraFlag) {
-                mCameraSettingInterface.onNoCamara();
-                return null;
-            }
-        } else {
-            throw new IllegalArgumentException(context.getClass().getSimpleName() + "请设置setCamaraInterface");
-        }
-
-        try {
-            c = Camera.open(); // attempt to get a Camera instance
-            setCameraParameters();
-            mSurfaceHolder = mSurfaceView.getHolder();
-            mSurfaceHolder.addCallback(this);
-//            mSurfaceHolder.setFormat(PixelFormat.TRANSPARENT);
-            mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-            c.setPreviewDisplay(mSurfaceHolder);
-            mSurfaceView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(c!=null){
-                        c.autoFocus(null);
-                    }
-                }
-            });
-        } catch (Exception e) {
-            // Camera is not available (in use or does not exist)
-            e.printStackTrace();
-            if (mCameraSettingInterface != null) {
-                mCameraSettingInterface.onCameraInavailable();
-            }
-        }
-        return c; // returns null if camera is unavailable
-    }
-
-    private void setCameraParameters() {
-        Camera.Parameters parameters = c.getParameters();
-        if (mCameraSettingInterface != null) {
-            int[] size = mCameraSettingInterface.onGetProposalPreviewSize();
-            if(size!=null) {
-                choosePreviewSize(parameters, size[1], size[0]);
-                cameraView.requestLayout();
-                c.setParameters(parameters);
-            }else {
-                setMaxSize(parameters);
-            }
-            c.setParameters(parameters);
-
-            Log.e("TAG", "设定的宽高：" + size[0] + ":" + size[1]);
-
-        }
-
-
-        c.setDisplayOrientation(90);
-    }
-
-    private void setMaxSize(Camera.Parameters parameters) {
-        Camera.Size maxPictureSize = parameters.getSupportedPictureSizes().get(0);
-        Camera.Size maxPreviewSize = parameters.getSupportedPreviewSizes().get(0);
-        for (int i = 0; i < parameters.getSupportedPictureSizes().size(); i++) {
-            Camera.Size s = parameters.getSupportedPictureSizes().get(i);
-            if (s.width > maxPictureSize.width) {
-                maxPictureSize = s;
-            }
-            if(s.width==maxPictureSize.width&&s.height>maxPictureSize.height){
-                maxPictureSize = s;
-            }
-        }
-        for (int i = 0; i < parameters.getSupportedPreviewSizes().size(); i++) {
-            Camera.Size s = parameters.getSupportedPreviewSizes().get(i);
-            if (s.width > maxPreviewSize.width) {
-                maxPreviewSize = s;
-            }
-            if(s.width==maxPreviewSize.width&&s.height>maxPreviewSize.height){
-                maxPreviewSize = s;
-            }
-        }
-
-        parameters.setPictureSize(maxPictureSize.width, maxPictureSize.height);
-        parameters.setPreviewSize(maxPreviewSize.width, maxPreviewSize.height);
-    }
-
-    private void choosePreviewSize(Camera.Parameters parameters, int width, int height) {
-        Camera.Size finalSize = null;
-        Camera.Size finalSize2 = null;
-
-        List sizeList = parameters.getSupportedPreviewSizes();
-        ArrayList validSize = new ArrayList();
-        Iterator validSizeIterator = sizeList.iterator();
-
-        while (validSizeIterator.hasNext()) {
-            Camera.Size item = (Camera.Size) validSizeIterator.next();
-            if (item.width >= width && item.height >= height && item.height != item.width) {
-                validSize.add(item);
-            }
-        }
-
-
-        Camera.Size[] sortedArray = (Camera.Size[]) validSize.toArray(new Camera.Size[0]);
-        Arrays.sort(sortedArray, new Comparator<Camera.Size>() {
-            public int compare(Camera.Size lhs, Camera.Size rhs) {
-                return lhs.width * lhs.height - rhs.width * rhs.height;
-            }
-        });
-
-        if (sortedArray.length == 0) {
-            finalSize =parameters.getPreviewSize();
-        } else {
-            finalSize = sortedArray[0];
-        }
-
-
-        List sizeList2 = parameters.getSupportedPictureSizes();
-        ArrayList validSize2 = new ArrayList();
-        Iterator validSizeIterator2 = sizeList2.iterator();
-
-        while (validSizeIterator2.hasNext()) {
-            Camera.Size item = (Camera.Size) validSizeIterator2.next();
-            if (item.width >= width && item.height >= height && item.height != item.width) {
-                validSize2.add(item);
-            }
-        }
-
-
-        Camera.Size[] sortedArray2 = (Camera.Size[]) validSize2.toArray(new Camera.Size[0]);
-        Arrays.sort(sortedArray2, new Comparator<Camera.Size>() {
-            public int compare(Camera.Size lhs, Camera.Size rhs) {
-                return lhs.width * lhs.height - rhs.width * rhs.height;
-            }
-        });
-
-        if (sortedArray2.length == 0) {
-            finalSize2 =parameters.getPreviewSize();
-        } else {
-            finalSize2 = sortedArray2[0];
-        }
-
-        Log.e("TAG", "计算的Preview宽高：" + finalSize.width + ":" + finalSize.height);
-        Log.e("TAG", "计算的Picture宽高：" + finalSize2.width + ":" + finalSize2.height);
-
-        parameters.setPreviewSize(finalSize.width, finalSize.height);
-        parameters.setPictureSize(finalSize2.width, finalSize2.height);
-    }
-
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        try {
-            c.setPreviewDisplay(holder);
-            c.startPreview();
-            cameraView.addMaskView();
-        } catch (IOException e) {
-            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
-            stopPreview();
-        }
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-        if (holder.getSurface() == null) {
-            return;
-        }
-
-        try {
-            c.stopPreview();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // set preview size and make any resize, rotate or
-        // reformatting changes here
-
-        try {
-            c.setPreviewDisplay(holder);
-            c.startPreview();
-        } catch (Exception e) {
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
-            e.printStackTrace();
-            stopPreview();
-        }
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-    }
-
-    public void startPreview() {
-        initCameraAndBindSurfaceHolder();
-    }
-
-    public void stopPreview() {
-        if (c != null) {
-            c.stopPreview();
-            c.release();
-            c = null;
-        }
-    }
-
-
-    public CameraView.MaskViewHolder addMaskView(int layoutid) {
-        mMaskView = LayoutInflater.from(context).inflate(layoutid, cameraView, false);
-        cameraView.addView(mMaskView);
-        return cameraView.new MaskViewHolder(mMaskView);
-    }
-
-
-    public View.OnClickListener takePicture() {
-        return new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(c!=null){
-                    c.autoFocus(new Camera.AutoFocusCallback() {
-                        @Override
-                        public void onAutoFocus(boolean success, Camera camera) {
-                            if(success){
-                                c.takePicture(null, null, pictureCallback);
-                            }
-                        }
-                    });
-                }
-            }
-        };
-    }
 }

@@ -4,6 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent">
 
+    <View
+        android:id="@+id/background"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:background="@android:color/black"
+        android:layout_height="match_parent">
+
+    </View>
+
     <Button
         android:id="@+id/takePicture"
         android:layout_width="100dp"
