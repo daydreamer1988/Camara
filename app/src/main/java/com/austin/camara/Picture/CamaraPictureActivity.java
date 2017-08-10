@@ -1,4 +1,4 @@
-package com.austin.camara;
+package com.austin.camara.Picture;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +11,8 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.austin.camara.R;
+
 public class CamaraPictureActivity extends AppCompatActivity implements CameraView.CameraSettingInterface {
     private CameraView mCameraView;
     private Camera mCamera;
@@ -20,7 +22,7 @@ public class CamaraPictureActivity extends AppCompatActivity implements CameraVi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(R.layout.activity_camara_picture);
+        setContentView(R.layout.activity_camara_root);
         root = (LinearLayout) findViewById(R.id.root);
         checkCameraHardware();
     }
@@ -52,12 +54,6 @@ public class CamaraPictureActivity extends AppCompatActivity implements CameraVi
 
     }
 
-    @Override
-    public void onNoCamara() {
-
-        new AlertDialog.Builder(this)
-                .setMessage("onNoCamara").show();
-    }
 
     @Override
     public void onCameraInavailable() {

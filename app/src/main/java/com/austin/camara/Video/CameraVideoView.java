@@ -1,4 +1,4 @@
-package com.austin.camara;
+package com.austin.camara.Video;
 
 import android.content.Context;
 import android.os.Build;
@@ -11,44 +11,48 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 
+import com.austin.camara.CameraControllInterface;
+import com.austin.camara.CameraSettingInterface;
+import com.austin.camara.R;
+
 /**
  * Created by gy on 2017/8/8.
  */
 
-public class CameraView extends RelativeLayout implements CameraControllInterface{
+public class CameraVideoView extends RelativeLayout implements CameraControllInterface{
     private Context context;
     private CameraSettingInterface mCameraInterface;
     private SurfaceView mSurfaceView;
     private SurfaceHolder mSurfaceHolder;
-    private CameraController mController;
+    private CameraVideoController mController;
     private MaskViewHolder maskViewHolder;
 
-    public CameraView(Context context) {
+    public CameraVideoView(Context context) {
         super(context);
         init(context);
     }
 
 
-    public CameraView(Context context, AttributeSet attrs) {
+    public CameraVideoView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
 
     }
 
-    public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CameraVideoView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public CameraView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public CameraVideoView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context);
     }
 
     private void init(Context context) {
         this.context = context;
-        mController = new CameraController(this);
+        mController = new CameraVideoController(this);
     }
 
 
@@ -62,8 +66,8 @@ public class CameraView extends RelativeLayout implements CameraControllInterfac
     }
 
     public void addMaskView() {
-        maskViewHolder = mController.addMaskView(R.layout.layout_camera_surface);
-        maskViewHolder.mTakePicture.setOnClickListener(mController.takePicture());
+        maskViewHolder = mController.addMaskView(R.layout.layout_camera_video_mask);
+        maskViewHolder.mTakePicture.setOnTouchListener(mController.record());
         new CountDownTimer(1000, 1000) {
             @Override
             public void onTick(long l) {
@@ -78,14 +82,6 @@ public class CameraView extends RelativeLayout implements CameraControllInterfac
     }
 
 
-    interface CameraSettingInterface {
-        void onNoCamara();
-
-        void onCameraInavailable();
-
-        int[] onGetProposalPreviewSize();
-
-    }
 
     class MaskViewHolder{
         private Button mTakePicture;

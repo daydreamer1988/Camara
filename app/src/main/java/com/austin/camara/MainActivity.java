@@ -17,6 +17,9 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.austin.camara.Picture.CamaraPictureActivity;
+import com.austin.camara.Video.CameraVideoActivity;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         mData.add("系统相机-拍照");
         mData.add("系统相机-录像");
         mData.add("自定义相机-拍照");
+        mData.add("自定义相机-录像");
 
     }
 
@@ -92,9 +96,8 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     switch (position){
                         case 0:
-                            /*File file = new File(Environment.getExternalStorageDirectory(), "pic.png");
-                            uri = new CamaraUtil(MainActivity.this).startPictureCamara(file);*/
-                            startActivity(new Intent(MainActivity.this, DeleteActivity.class));
+                            File file = new File(Environment.getExternalStorageDirectory(), "pic.png");
+                            uri = new CamaraUtil(MainActivity.this).startPictureCamara(file);
 
                             break;
 
@@ -108,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case 2:
                             CamaraPictureActivity.startActivity(MainActivity.this);
+                            break;
+
+                        case 3:
+                            CameraVideoActivity.startActivity(MainActivity.this);
                             break;
                     }
                 }

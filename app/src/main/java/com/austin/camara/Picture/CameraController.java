@@ -1,4 +1,4 @@
-package com.austin.camara;
+package com.austin.camara.Picture;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -13,6 +13,8 @@ import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+
+import com.austin.camara.CamaraUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
