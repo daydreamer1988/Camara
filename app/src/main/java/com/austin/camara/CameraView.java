@@ -64,7 +64,7 @@ public class CameraView extends RelativeLayout implements CameraControllInterfac
     public void addMaskView() {
         maskViewHolder = mController.addMaskView(R.layout.layout_camera_surface);
         maskViewHolder.mTakePicture.setOnClickListener(mController.takePicture());
-        new CountDownTimer(1500, 1500) {
+        new CountDownTimer(1000, 1000) {
             @Override
             public void onTick(long l) {
 

@@ -47,8 +47,8 @@ public class CamaraPictureActivity extends AppCompatActivity implements CameraVi
     @Override
     protected void onStop() {
         super.onStop();
-        root.removeView(mCameraView);
         mCameraView.onStop();
+        root.removeView(mCameraView);
 
     }
 

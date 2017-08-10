@@ -132,6 +132,7 @@ public class CameraController implements SurfaceHolder.Callback {
             }
         }
 
+        if(mSurfaceHolder!=null)
         mSurfaceHolder.removeCallback(CameraController.this);
         cameraView.removeView(mMaskView);
         cameraView.removeView(mSurfaceView);
