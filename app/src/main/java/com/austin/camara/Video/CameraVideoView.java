@@ -9,6 +9,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.austin.camara.CameraControllInterface;
@@ -68,6 +69,7 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
     public void addMaskView() {
         maskViewHolder = mController.addMaskView(R.layout.layout_camera_video_mask);
         maskViewHolder.mTakePicture.setOnTouchListener(mController.record());
+        maskViewHolder.mChangeCamera.setOnClickListener(mController.changeCamera());
         new CountDownTimer(1000, 1000) {
             @Override
             public void onTick(long l) {
@@ -86,9 +88,13 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
     class MaskViewHolder{
         private Button mTakePicture;
         private View background;
+        private ImageView mChangeCamera;
+
+
         public MaskViewHolder(View maskView) {
             mTakePicture = (Button) maskView.findViewById(R.id.takePicture);
             background = maskView.findViewById(R.id.background);
+            mChangeCamera = (ImageView) findViewById(R.id.changeCamera);
         }
     }
 

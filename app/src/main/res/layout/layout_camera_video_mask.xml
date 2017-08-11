@@ -13,6 +13,16 @@
 
     </View>
 
+
+    <ImageView
+        android:id="@+id/changeCamera"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:src="@mipmap/changecamera"
+        android:layout_alignParentRight="true"
+        android:padding="20dp"
+        />
+
     <Button
         android:id="@+id/takePicture"
         android:layout_width="80dp"
@@ -24,5 +34,7 @@
         android:layout_marginBottom="20dp"
         android:background="@drawable/video_record"
         android:layout_height="80dp" />
+
+
 
 </RelativeLayout>

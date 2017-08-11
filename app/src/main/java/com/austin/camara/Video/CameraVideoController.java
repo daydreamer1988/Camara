@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -18,6 +19,7 @@ import android.view.View;
 
 import com.austin.camara.CamaraUtil;
 import com.austin.camara.CameraSettingInterface;
+import com.austin.camara.R;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +50,9 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     private Camera.Size previewSize;
     private String videoPath;
     private Camera.Size supportedVideoSize;
+    private boolean isBackCamera = true;
+    private int cameraId = 0;
+    private MediaPlayer mediaPlayer;
 
 
     public CameraVideoController(CameraVideoView cameraView) {
@@ -64,7 +69,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                 protected Void doInBackground(Void... voids) {
                     try {
                         synchronized (CameraVideoController.this) {
-                            initCamera();
+                            initCamera(cameraId);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -123,8 +128,8 @@ public class CameraVideoController implements SurfaceHolder.Callback {
 
     }
 
-    private void initCamera() {
-        camera = Camera.open();
+    private void initCamera(int cameraId) {
+        camera = Camera.open(cameraId);
         Camera.Parameters parameters = camera.getParameters();
 
         List<String> focusModes = parameters.getSupportedFocusModes();
@@ -183,7 +188,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
         CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
         Log.e("TAG", "默认videoSize:" + profile.videoFrameWidth + ":" + profile.videoFrameHeight);
-        mMediaRecorder.setOrientationHint(90);
+        mMediaRecorder.setOrientationHint(cameraId == 0 ? 90 : 270);
         mMediaRecorder.setProfile(profile);
 
         mMediaRecorder.setMaxDuration(1000*5);
@@ -249,6 +254,9 @@ public class CameraVideoController implements SurfaceHolder.Callback {
 
     public CameraVideoView.MaskViewHolder addMaskView(int layoutid) {
             mMaskView = LayoutInflater.from(context).inflate(layoutid, cameraView, false);
+            if(Camera.getNumberOfCameras()<=1){
+                mMaskView.findViewById(R.id.changeCamera).setVisibility(View.GONE);
+            }
             cameraView.addView(mMaskView);
             maskViewHolder = cameraView.new MaskViewHolder(mMaskView);
         return maskViewHolder;
@@ -355,4 +363,56 @@ public class CameraVideoController implements SurfaceHolder.Callback {
             e.printStackTrace();
         }
     }
+
+
+    /*public void playVideo(View v){
+        try {
+            mediaPlayer =new MediaPlayer();
+            mediaPlayer.setDataSource(videoPath);
+            mediaPlayer.setDisplay(mSurfaceHolder);
+            mediaPlayer.setLooping(true);
+            mediaPlayer.prepareAsync();
+
+
+        } catch (IllegalArgumentException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        mediaPlayer.setOnBufferingUpdateListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+    }*/
+
+    public View.OnClickListener changeCamera() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(isBackCamera) {
+                        for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
+                            Camera.CameraInfo info = new Camera.CameraInfo();
+                            Camera.getCameraInfo(i, info);
+                            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                                CameraVideoController.this.stopPreview();
+                                cameraId = i;
+                                startPreview();
+                            }
+                        }
+                }else {
+                    CameraVideoController.this.stopPreview();
+                    startPreview();
+                }
+            }
+        };
+    }
+
+
 }
