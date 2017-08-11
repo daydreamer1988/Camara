@@ -73,12 +73,7 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
         maskViewHolder = mController.addMaskView(R.layout.layout_camera_video_mask);
         maskViewHolder.mTakePicture.setOnTouchListener(mController.record());
         maskViewHolder.mChangeCamera.setOnClickListener(mController.changeCamera());
-        maskViewHolder.mBack.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ((Activity) context).onBackPressed();
-            }
-        });
+        maskViewHolder.mBack.setOnClickListener(mController.goBack());
         new CountDownTimer(1000, 1000) {
             @Override
             public void onTick(long l) {
@@ -113,7 +108,7 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
 
 
     class MaskViewHolder{
-        private Button mTakePicture;
+        public Button mTakePicture;
         private View background;
         private ImageView mChangeCamera;
         private ImageView mBack;
@@ -127,5 +122,12 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
             mChangeCamera = (ImageView) findViewById(R.id.changeCamera);
         }
     }
+
+    class MaskPlayViewHolder{
+
+        public MaskPlayViewHolder(View maskPlayView) {
+        }
+    }
+
 
 }

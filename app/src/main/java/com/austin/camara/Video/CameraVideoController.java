@@ -2,6 +2,7 @@ package com.austin.camara.Video;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.content.Context;
 import android.hardware.Camera;
 import android.media.AudioManager;
@@ -62,6 +63,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     private Animator animator;
     private long startTime;
     private long stopTime;
+    private CameraVideoView.MaskPlayViewHolder maskPlayViewHolder;
 
 
     public CameraVideoController(CameraVideoView cameraView) {
@@ -201,7 +203,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         mMediaRecorder.setOrientationHint(cameraId == 0 ? 90 : 270);
         mMediaRecorder.setProfile(profile);
 
-        mMediaRecorder.setMaxDuration(1000*5);
+        mMediaRecorder.setMaxDuration(1000*120);
         int finalWidth = previewSize.width;
         int finalHeight = previewSize.height;
         mMediaRecorder.setVideoSize(finalWidth, finalHeight);
@@ -317,7 +319,8 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                         view.setBackgroundResource(R.drawable.video_record_selected);
                         animator = loadAnimator(context, R.animator.record_animation);
                         animator.setTarget(view);
-                        animator.addListener(new AnimatorListenerAdapter() {
+                        AnimatorListenerAdapter listener = new AnimatorListenerAdapter() {
+
                             @Override
                             public void onAnimationEnd(Animator animation) {
                                 if (!animationCancel) {
@@ -330,7 +333,8 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                                 super.onAnimationRepeat(animation);
 
                             }
-                        });
+                        };
+                        animator.addListener(listener);
                         animator.start();
 
                         isVideoRecorderReady = prepareVideoRecorder();
@@ -379,6 +383,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
 
             if((stopTime-startTime)/1000>=5) {
                 playVideo();
+                maskViewHolder.mTakePicture.setEnabled(false);
             }else{
                 maskViewHolder.mTooShortHint.setVisibility(View.VISIBLE);
                 maskViewHolder.mTooShortHint.postDelayed(new Runnable() {
@@ -418,6 +423,12 @@ public class CameraVideoController implements SurfaceHolder.Callback {
             playSurfaceView.setZOrderOnTop(true);
             playSurfaceView.setZOrderMediaOverlay(true);
             playSurfaceView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            playSurfaceView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
             playHolder = playSurfaceView.getHolder();
             playHolder.addCallback(new SurfaceHolder.Callback() {
                 @Override
@@ -471,6 +482,11 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                if (isRecording) {
+                    return;
+                }
+
                 if(isBackCamera) {
                         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
                             Camera.CameraInfo info = new Camera.CameraInfo();
@@ -479,11 +495,15 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                                 CameraVideoController.this.stopPreview();
                                 cameraId = i;
                                 startPreview();
+                                isBackCamera = false;
+
                             }
                         }
                 }else {
                     CameraVideoController.this.stopPreview();
+                    cameraId = 0;
                     startPreview();
+                    isBackCamera = true;
                 }
             }
         };
@@ -506,7 +526,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     public View addPlayMaskView(int layoutId) {
         mPlayMaskView = LayoutInflater.from(context).inflate(layoutId, cameraView, false);
         cameraView.addView(mPlayMaskView);
-        maskViewHolder = cameraView.new MaskViewHolder(mPlayMaskView);
+        maskPlayViewHolder = cameraView.new MaskPlayViewHolder(mPlayMaskView);
         return mPlayMaskView;
     }
 
@@ -533,5 +553,18 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         cameraView.setPlaying(false);
         cameraView.removeView(playSurfaceView);
         cameraView.removeView(mPlayMaskView);
+    }
+
+    public View.OnClickListener goBack() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isRecording) {
+                    return;
+                }
+
+                ((Activity) context).onBackPressed();
+            }
+        };
     }
 }
