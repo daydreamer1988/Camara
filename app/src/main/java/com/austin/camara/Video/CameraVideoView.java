@@ -27,6 +27,7 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
     private SurfaceHolder mSurfaceHolder;
     private CameraVideoController mController;
     private MaskViewHolder maskViewHolder;
+    private boolean isPlaying = false;
 
     public CameraVideoView(Context context) {
         super(context);
@@ -83,6 +84,24 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
         }.start();
     }
 
+    public View addPlayMaskView() {
+        View view = mController.addPlayMaskView(R.layout.layout_camera_video_play_mask2);
+        view.findViewById(R.id.choose).setOnClickListener(mController.choose());
+        view.findViewById(R.id.back).setOnClickListener(mController.returnPreview());
+        return view;
+    }
+
+    public void setPlaying(boolean isPlaying) {
+        this.isPlaying = isPlaying;
+    }
+
+    public boolean isPlaying(){
+        return isPlaying;
+    }
+
+    public void stopPlaying() {
+        mController.stopPlaying();
+    }
 
 
     class MaskViewHolder{

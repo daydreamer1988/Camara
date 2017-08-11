@@ -1,13 +1,14 @@
 package com.austin.camara.Video;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
-import android.content.Intent;
 import android.hardware.Camera;
+import android.media.AudioManager;
 import android.media.CamcorderProfile;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
@@ -16,6 +17,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.austin.camara.CamaraUtil;
 import com.austin.camara.CameraSettingInterface;
@@ -27,6 +29,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static android.animation.AnimatorInflater.loadAnimator;
 import static android.content.ContentValues.TAG;
 
 /**
@@ -53,11 +56,16 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     private boolean isBackCamera = true;
     private int cameraId = 0;
     private MediaPlayer mediaPlayer;
+    private SurfaceView playSurfaceView;
+    private SurfaceHolder playHolder;
+    private View mPlayMaskView;
+    private Animator animator;
 
 
     public CameraVideoController(CameraVideoView cameraView) {
         this.cameraView = cameraView;
         this.context = cameraView.getContext();
+
     }
 
     public void startPreview() {
@@ -296,13 +304,29 @@ public class CameraVideoController implements SurfaceHolder.Callback {
 
     public View.OnTouchListener record() {
         return new View.OnTouchListener() {
+            public boolean animationCancel = false;
+
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
 
                 switch (motionEvent.getAction()){
                     case MotionEvent.ACTION_DOWN:
-                        isVideoRecorderReady = prepareVideoRecorder();
+                        animationCancel = false;
+                        view.setBackgroundResource(R.drawable.video_record_selected);
+                        animator = loadAnimator(context, R.animator.record_animation);
+                        animator.addListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationRepeat(Animator animation) {
+                                super.onAnimationRepeat(animation);
+                                if (animationCancel) {
+                                    animator.cancel();
+                                }
+                            }
+                        });
+                        animator.setTarget(view);
 
+                        animator.start();
+                        isVideoRecorderReady = prepareVideoRecorder();
                         if(isVideoRecorderReady) {
                             if (camera != null) {
                                 mMediaRecorder.start();
@@ -312,6 +336,9 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                         break;
 
                     case MotionEvent.ACTION_UP:
+                        animationCancel = true;
+                        view.setBackgroundResource(R.drawable.video_record);
+                        animator.cancel();
                         if(isRecording){
                             stopRecording();
                         }
@@ -342,11 +369,12 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         releaseMediaRecorder(); // release the MediaRecorder object
         try {
 
-            Intent intent = new Intent(Intent.ACTION_VIEW);
+            playVideo();
+            /*Intent intent = new Intent(Intent.ACTION_VIEW);
             String type = "video/mp4";
             Uri uri = Uri.parse(Environment.getExternalStorageDirectory()+"/video.mp4");
             intent.setDataAndType(uri, type);
-            context.startActivity(intent);
+            context.startActivity(intent);*/
 
 
             File file = new File(videoPath);
@@ -365,32 +393,61 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     }
 
 
-    /*public void playVideo(View v){
+    public void playVideo(){
         try {
+            cameraView.setPlaying(true);
+            playSurfaceView = new SurfaceView(context);
+            playSurfaceView.setZOrderOnTop(true);
+            playSurfaceView.setZOrderMediaOverlay(true);
+            playSurfaceView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            playHolder = playSurfaceView.getHolder();
+            playHolder.addCallback(new SurfaceHolder.Callback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                    mediaPlayer.setDisplay(playHolder);
+                }
+                @Override
+                public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+                }
+                @Override
+                public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+                }
+            });
+            playHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
             mediaPlayer =new MediaPlayer();
-            mediaPlayer.setDataSource(videoPath);
-            mediaPlayer.setDisplay(mSurfaceHolder);
             mediaPlayer.setLooping(true);
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+                    cameraView.addView(playSurfaceView);
+                    cameraView.addPlayMaskView();
+                    mediaPlayer.start();
+                }
+            });
+            mediaPlayer.setDataSource(videoPath);
             mediaPlayer.prepareAsync();
-
 
         } catch (IllegalArgumentException e) {
             // TODO Auto-generated catch block
+                         cameraView.setPlaying(false);
+
             e.printStackTrace();
         } catch (IllegalStateException e) {
             // TODO Auto-generated catch block
+            cameraView.setPlaying(false);
+
             e.printStackTrace();
         } catch (IOException e) {
             // TODO Auto-generated catch block
+            cameraView.setPlaying(false);
+
             e.printStackTrace();
         }
 
-        mediaPlayer.setOnBufferingUpdateListener(this);
-        mediaPlayer.setOnCompletionListener(this);
-        mediaPlayer.setOnPreparedListener(this);
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-    }*/
+
+    }
 
     public View.OnClickListener changeCamera() {
         return new View.OnClickListener() {
@@ -415,4 +472,48 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     }
 
 
+    private void releasePlayer() {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            //关键语句
+            mediaPlayer.reset();
+
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+
+    }
+
+
+    public View addPlayMaskView(int layoutId) {
+        mPlayMaskView = LayoutInflater.from(context).inflate(layoutId, cameraView, false);
+        cameraView.addView(mPlayMaskView);
+        maskViewHolder = cameraView.new MaskViewHolder(mPlayMaskView);
+        return mPlayMaskView;
+    }
+
+    public View.OnClickListener choose() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        };
+    }
+
+    public View.OnClickListener returnPreview() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                stopPlaying();
+            }
+        };
+    }
+
+    public void stopPlaying() {
+        releasePlayer();
+        cameraView.setPlaying(false);
+        cameraView.removeView(playSurfaceView);
+        cameraView.removeView(mPlayMaskView);
+    }
 }

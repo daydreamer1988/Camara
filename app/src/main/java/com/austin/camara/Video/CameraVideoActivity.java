@@ -82,4 +82,13 @@ public class CameraVideoActivity extends AppCompatActivity implements CameraSett
         return new int[]{widthPixels,heightPixels};
 //        return null;
     }
+
+    @Override
+    public void onBackPressed() {
+        if(mCameraVideoView.isPlaying()){
+            mCameraVideoView.stopPlaying();
+        }else {
+            super.onBackPressed();
+        }
+    }
 }
