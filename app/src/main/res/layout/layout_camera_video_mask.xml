@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
+    android:animateLayoutChanges="true"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent">
 
@@ -21,13 +22,25 @@
         android:src="@mipmap/changecamera"
         android:layout_alignParentRight="true"
         android:padding="20dp"
+
         />
 
 
-        <Button
+    <ImageView
+        android:id="@+id/goBack"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:src="@mipmap/back"
+        android:padding="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/view"
+        android:layout_toEndOf="@+id/view" />
+
+    <Button
             android:id="@+id/takePicture"
             android:layout_width="80dp"
             android:text="录像"
+            android:gravity="center"
             android:textColor="@android:color/white"
             android:textSize="18sp"
             android:layout_centerHorizontal="true"
@@ -35,9 +48,28 @@
             android:layout_marginBottom="20dp"
             android:background="@drawable/video_record"
             android:layout_height="80dp" />
+
+    <TextView
+        android:id="@+id/tooShortHint"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="录制时间太短,请重试"
+        android:padding="10dp"
+        android:textSize="15sp"
+        android:background="@drawable/hint_bg"
+        android:layout_centerInParent="true"
+        android:textColor="#ffffff"
+
+        />
+
+
     <View
         android:layout_width="1dp"
         android:layout_height="1dp"
-        android:layout_alignParentBottom="true"></View>
+        android:layout_alignParentBottom="true"
+        android:id="@+id/view"></View>
+
+
 
 </RelativeLayout>

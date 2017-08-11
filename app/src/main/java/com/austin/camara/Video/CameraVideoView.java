@@ -1,5 +1,6 @@
 package com.austin.camara.Video;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.os.CountDownTimer;
@@ -11,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.austin.camara.CameraControllInterface;
 import com.austin.camara.CameraSettingInterface;
@@ -71,6 +73,12 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
         maskViewHolder = mController.addMaskView(R.layout.layout_camera_video_mask);
         maskViewHolder.mTakePicture.setOnTouchListener(mController.record());
         maskViewHolder.mChangeCamera.setOnClickListener(mController.changeCamera());
+        maskViewHolder.mBack.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((Activity) context).onBackPressed();
+            }
+        });
         new CountDownTimer(1000, 1000) {
             @Override
             public void onTick(long l) {
@@ -108,9 +116,12 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
         private Button mTakePicture;
         private View background;
         private ImageView mChangeCamera;
-
+        private ImageView mBack;
+        public TextView mTooShortHint;
 
         public MaskViewHolder(View maskView) {
+            mBack = (ImageView) maskView.findViewById(R.id.goBack);
+            mTooShortHint = (TextView) maskView.findViewById(R.id.tooShortHint);
             mTakePicture = (Button) maskView.findViewById(R.id.takePicture);
             background = maskView.findViewById(R.id.background);
             mChangeCamera = (ImageView) findViewById(R.id.changeCamera);

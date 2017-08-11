@@ -60,6 +60,8 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     private SurfaceHolder playHolder;
     private View mPlayMaskView;
     private Animator animator;
+    private long startTime;
+    private long stopTime;
 
 
     public CameraVideoController(CameraVideoView cameraView) {
@@ -335,6 +337,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                         if(isVideoRecorderReady) {
                             if (camera != null) {
                                 mMediaRecorder.start();
+                                startTime = System.currentTimeMillis();
                                 isRecording = true;
                             }
                         }
@@ -361,6 +364,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
             mMediaRecorder.setPreviewDisplay(null);
             try {
                 mMediaRecorder.stop();
+                stopTime = System.currentTimeMillis();
             } catch (IllegalStateException e) {
                 e.printStackTrace();
             } catch (RuntimeException e) {
@@ -373,7 +377,17 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         releaseMediaRecorder(); // release the MediaRecorder object
         try {
 
-            playVideo();
+            if((stopTime-startTime)/1000>=5) {
+                playVideo();
+            }else{
+                maskViewHolder.mTooShortHint.setVisibility(View.VISIBLE);
+                maskViewHolder.mTooShortHint.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        maskViewHolder.mTooShortHint.setVisibility(View.GONE);
+                    }
+                }, 2000);
+            }
             /*Intent intent = new Intent(Intent.ACTION_VIEW);
             String type = "video/mp4";
             Uri uri = Uri.parse(Environment.getExternalStorageDirectory()+"/video.mp4");
