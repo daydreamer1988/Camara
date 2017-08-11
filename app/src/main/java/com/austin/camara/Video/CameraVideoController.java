@@ -314,18 +314,23 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                         animationCancel = false;
                         view.setBackgroundResource(R.drawable.video_record_selected);
                         animator = loadAnimator(context, R.animator.record_animation);
+                        animator.setTarget(view);
                         animator.addListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                if (!animationCancel) {
+                                    animator.start();
+                                }
+                            }
+
                             @Override
                             public void onAnimationRepeat(Animator animation) {
                                 super.onAnimationRepeat(animation);
-                                if (animationCancel) {
-                                    animator.cancel();
-                                }
+
                             }
                         });
-                        animator.setTarget(view);
-
                         animator.start();
+
                         isVideoRecorderReady = prepareVideoRecorder();
                         if(isVideoRecorderReady) {
                             if (camera != null) {
@@ -338,7 +343,6 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                     case MotionEvent.ACTION_UP:
                         animationCancel = true;
                         view.setBackgroundResource(R.drawable.video_record);
-                        animator.cancel();
                         if(isRecording){
                             stopRecording();
                         }
