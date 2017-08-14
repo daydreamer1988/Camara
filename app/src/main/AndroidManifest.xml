@@ -32,12 +32,10 @@
         </provider>
 
         <activity android:name=".PicturePreviewActivity" />
-            <activity android:name=".Picture.CamaraPictureActivity"
-            ></activity>
-        <activity
-            android:name=".Video.CameraVideoActivity"
-            />
-
+        <activity android:name=".Picture.CamaraPictureActivity" />
+        <activity android:name=".Video.CameraVideoActivity" />
+        <activity android:name=".Video.VideoEditActivity"></activity>
+        <activity android:name=".Video.VideoEditActivity2"></activity>
     </application>
 
 </manifest>

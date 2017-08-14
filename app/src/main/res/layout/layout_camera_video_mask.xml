@@ -36,6 +36,17 @@
         android:layout_toRightOf="@+id/view"
         android:layout_toEndOf="@+id/view" />
 
+
+    <TextView
+        android:id="@+id/time"
+        android:layout_width="wrap_content"
+        android:layout_height="70dp"
+        android:gravity="center"
+        android:layout_centerHorizontal="true"
+        android:text="最长视频录制时间120秒"
+        android:textColor="#ffffff"
+        />
+
     <Button
             android:id="@+id/takePicture"
             android:layout_width="80dp"
@@ -54,7 +65,7 @@
         android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="录制时间太短,请重试"
+        android:text="录制时间不能少于5秒,请重试"
         android:padding="10dp"
         android:textSize="15sp"
         android:background="@drawable/hint_bg"

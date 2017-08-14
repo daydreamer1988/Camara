@@ -11,6 +11,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -64,6 +65,9 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     private long startTime;
     private long stopTime;
     private CameraVideoView.MaskPlayViewHolder maskPlayViewHolder;
+    private CountDownTimer countDownTimer;
+    private int maxSecond = 5;
+    private int minSecond = 5;
 
 
     public CameraVideoController(CameraVideoView cameraView) {
@@ -124,9 +128,14 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     public void stopPreview() {
         synchronized (this) {
             if (camera != null) {
+                camera.lock();           // lock camera for later use
                 camera.stopPreview();
                 camera.release();
                 camera = null;
+            }
+
+            if(countDownTimer!=null){
+                countDownTimer.onFinish();
             }
 
             releaseMediaRecorder();
@@ -198,19 +207,32 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
         // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
-        CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+        CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
         Log.e("TAG", "默认videoSize:" + profile.videoFrameWidth + ":" + profile.videoFrameHeight);
         mMediaRecorder.setOrientationHint(cameraId == 0 ? 90 : 270);
         mMediaRecorder.setProfile(profile);
 
-        mMediaRecorder.setMaxDuration(1000*120);
+        mMediaRecorder.setMaxDuration(1000*maxSecond);
         int finalWidth = previewSize.width;
         int finalHeight = previewSize.height;
+//        int finalWidth = profile.videoFrameWidth;
+//        int finalHeight = profile.videoFrameHeight;
+
         mMediaRecorder.setVideoSize(finalWidth, finalHeight);
+        mMediaRecorder.setVideoEncodingBitRate(profile.videoBitRate/6);
+        Log.e("TAG", "bitRate:" + profile.videoBitRate / 6);
+//        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+//        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
+
         Log.e("TAG", "设置videoSize:" + finalWidth + ":" + finalHeight);
 //        mMediaRecorder.setMaxFileSize(1024 * 1024 * 10);
         // Step 4: Set output file
         videoPath = Environment.getExternalStorageDirectory() + "/video.mp4";
+        File file = new File(videoPath);
+        if(file.exists()){
+            file.delete();
+        }
         mMediaRecorder.setOutputFile(videoPath);
 
         // Step 5: Set the preview output
@@ -260,7 +282,6 @@ public class CameraVideoController implements SurfaceHolder.Callback {
             mMediaRecorder.reset();   // clear recorder configuration
             mMediaRecorder.release(); // release the recorder object
             mMediaRecorder = null;
-            camera.lock();           // lock camera for later use
         }
     }
 
@@ -341,6 +362,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
                         if(isVideoRecorderReady) {
                             if (camera != null) {
                                 mMediaRecorder.start();
+                                startCountDown();
                                 startTime = System.currentTimeMillis();
                                 isRecording = true;
                             }
@@ -362,12 +384,30 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         };
     }
 
+    private void startCountDown() {
+        countDownTimer = new CountDownTimer(maxSecond * 1000, 100) {
+
+            @Override
+            public void onTick(long l) {
+                maskViewHolder.mTime.setText(String.format("%.1f", maxSecond- (l / 1000.0)) + "秒/" + maxSecond + ".0秒");
+            }
+
+            @Override
+            public void onFinish() {
+                maskViewHolder.mTime.setText("最长视频录制时间120秒");
+
+            }
+        };
+        countDownTimer.start();
+    }
+
     private void stopRecording() {
         if (mMediaRecorder != null) {
             mMediaRecorder.setOnErrorListener(null);
             mMediaRecorder.setPreviewDisplay(null);
             try {
                 mMediaRecorder.stop();
+
                 stopTime = System.currentTimeMillis();
             } catch (IllegalStateException e) {
                 e.printStackTrace();
@@ -379,9 +419,16 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         }
         isRecording = false;
         releaseMediaRecorder(); // release the MediaRecorder object
+
+        if(countDownTimer!=null){
+            countDownTimer.cancel();
+            countDownTimer.onFinish();
+        }
+
+
         try {
 
-            if((stopTime-startTime)/1000>=5) {
+            if((stopTime-startTime)/1000>=minSecond) {
                 playVideo();
                 maskViewHolder.mTakePicture.setEnabled(false);
             }else{
@@ -526,6 +573,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     public View addPlayMaskView(int layoutId) {
         mPlayMaskView = LayoutInflater.from(context).inflate(layoutId, cameraView, false);
         cameraView.addView(mPlayMaskView);
+        maskViewHolder.mTakePicture.setEnabled(false);
         maskPlayViewHolder = cameraView.new MaskPlayViewHolder(mPlayMaskView);
         return mPlayMaskView;
     }
@@ -534,7 +582,9 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                if(mCameraSettingInterface!=null){
+                    mCameraSettingInterface.onDoneRecording(videoPath);
+                }
             }
         };
     }
@@ -543,6 +593,7 @@ public class CameraVideoController implements SurfaceHolder.Callback {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                maskViewHolder.mTakePicture.setEnabled(true);
                 stopPlaying();
             }
         };
@@ -551,7 +602,10 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     public void stopPlaying() {
         releasePlayer();
         cameraView.setPlaying(false);
+        maskViewHolder.mTakePicture.setEnabled(true);
+        if(playSurfaceView!=null)
         cameraView.removeView(playSurfaceView);
+        if(mPlayMaskView!=null)
         cameraView.removeView(mPlayMaskView);
     }
 

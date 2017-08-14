@@ -5,27 +5,29 @@
     android:gravity="center_horizontal"
     android:layout_height="match_parent">
 
-    <Button
+    <ImageView
         android:id="@+id/choose"
-        android:layout_width="80dp"
+        android:layout_width="60dp"
         android:text="Y"
+        android:src="@mipmap/yes"
+        android:padding="15dp"
         android:textColor="@android:color/white"
-        android:textSize="18sp"
         android:layout_marginLeft="200dp"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="20dp"
-        android:background="@drawable/video_record"
-        android:layout_height="80dp" />
+        android:background="@drawable/play_bg"
+        android:layout_height="60dp" />
 
-    <Button
+    <ImageView
         android:id="@+id/back"
-        android:layout_width="80dp"
+        android:layout_width="60dp"
         android:text="N"
         android:textColor="@android:color/white"
-        android:textSize="18sp"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="20dp"
-        android:background="@drawable/video_record"
-        android:layout_height="80dp" />
+        android:src="@mipmap/back2"
+        android:padding="15dp"
+        android:background="@drawable/play_bg"
+        android:layout_height="60dp" />
 
 </RelativeLayout>

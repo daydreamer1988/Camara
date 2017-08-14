@@ -9,4 +9,6 @@ public interface CameraSettingInterface {
 
     int[] onGetProposalPreviewSize();
 
+    void onDoneRecording(String filePath);
+
 }

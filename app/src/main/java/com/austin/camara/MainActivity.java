@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.austin.camara.Picture.CamaraPictureActivity;
 import com.austin.camara.Video.CameraVideoActivity;
+import com.austin.camara.Video.VideoEditActivity2;
 
 import java.io.File;
 import java.net.URI;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         mData.add("系统相机-录像");
         mData.add("自定义相机-拍照");
         mData.add("自定义相机-录像");
+        mData.add("视频封面选择");
 
     }
 
@@ -115,6 +117,11 @@ public class MainActivity extends AppCompatActivity {
 
                         case 3:
                             CameraVideoActivity.startActivity(MainActivity.this);
+                            break;
+
+                        case 4:
+//                            VideoEditActivity.startActivity(MainActivity.this, Environment.getExternalStorageDirectory()+"/video.mp4", 1234);
+                            VideoEditActivity2.startActivity(MainActivity.this, Environment.getExternalStorageDirectory()+"/video.mp4", 1234);
                             break;
                     }
                 }

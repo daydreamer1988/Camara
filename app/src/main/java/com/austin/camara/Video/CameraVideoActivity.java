@@ -16,6 +16,7 @@ import com.austin.camara.CameraSettingInterface;
 import com.austin.camara.R;
 
 public class CameraVideoActivity extends AppCompatActivity implements CameraSettingInterface {
+    private static final int VIDEO_EDIT = 2048;
     private CameraVideoView mCameraVideoView;
     private Camera mCamera;
     private LinearLayout root;
@@ -79,9 +80,15 @@ public class CameraVideoActivity extends AppCompatActivity implements CameraSett
         int heightPixels = getResources().getDisplayMetrics().heightPixels;
 //        return new int[]{480, 320};
 
-        return new int[]{widthPixels,heightPixels};
+        return new int[]{widthPixels/2,heightPixels/2};
 //        return null;
     }
+
+    @Override
+    public void onDoneRecording(String filePath) {
+        VideoEditActivity2.startActivity(this, filePath, VIDEO_EDIT);
+    }
+
 
     @Override
     public void onBackPressed() {

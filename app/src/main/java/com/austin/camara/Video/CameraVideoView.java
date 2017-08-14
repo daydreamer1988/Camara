@@ -1,6 +1,5 @@
 package com.austin.camara.Video;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.os.CountDownTimer;
@@ -67,6 +66,7 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
 
     public void onStop() {
         mController.stopPreview();
+        mController.stopPlaying();
     }
 
     public void addMaskView() {
@@ -113,6 +113,7 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
         private ImageView mChangeCamera;
         private ImageView mBack;
         public TextView mTooShortHint;
+        public TextView mTime;
 
         public MaskViewHolder(View maskView) {
             mBack = (ImageView) maskView.findViewById(R.id.goBack);
@@ -120,6 +121,7 @@ public class CameraVideoView extends RelativeLayout implements CameraControllInt
             mTakePicture = (Button) maskView.findViewById(R.id.takePicture);
             background = maskView.findViewById(R.id.background);
             mChangeCamera = (ImageView) findViewById(R.id.changeCamera);
+            mTime = (TextView) findViewById(R.id.time);
         }
     }
 
