@@ -52,13 +52,11 @@ public class CameraVideoActivity extends AppCompatActivity implements CameraSett
 
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
         mCameraVideoView.onStop();
         root.removeView(mCameraVideoView);
-
     }
-
 
 
     @Override
@@ -70,23 +68,23 @@ public class CameraVideoActivity extends AppCompatActivity implements CameraSett
                         .setMessage("onCameraInavailable").show();
             }
         });
-
     }
-
 
     @Override
     public int[] onGetProposalPreviewSize() {
         int widthPixels = getResources().getDisplayMetrics().widthPixels;
         int heightPixels = getResources().getDisplayMetrics().heightPixels;
-//        return new int[]{480, 320};
-
-        return new int[]{widthPixels/2,heightPixels/2};
-//        return null;
+        return new int[]{widthPixels,heightPixels};
     }
 
     @Override
     public void onDoneRecording(String filePath) {
         VideoEditActivity2.startActivity(this, filePath, VIDEO_EDIT);
+    }
+
+    @Override
+    public int[] getTimeLimit() {
+        return new int[]{5, 120};
     }
 
 

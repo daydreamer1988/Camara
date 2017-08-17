@@ -11,4 +11,10 @@ public interface CameraSettingInterface {
 
     void onDoneRecording(String filePath);
 
+    /**
+     * int[0] min
+     * int[1] max
+     * @return
+     */
+    int[] getTimeLimit();
 }

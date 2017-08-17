@@ -77,6 +77,10 @@ public class CameraVideoController implements SurfaceHolder.Callback {
     }
 
     public void startPreview() {
+            if(mCameraSettingInterface!=null){
+                minSecond = mCameraSettingInterface.getTimeLimit()[0];
+                maxSecond = mCameraSettingInterface.getTimeLimit()[1];
+            }
             mSurfaceView = new SurfaceView(context);
             cameraView.addView(mSurfaceView);
             cameraView.addMaskView();
